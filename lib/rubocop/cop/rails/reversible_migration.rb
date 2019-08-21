@@ -132,7 +132,7 @@ module RuboCop
         ].freeze
 
         def_node_matcher :irreversible_schema_statement_call, <<-PATTERN
-          (send nil? ${:change_table_comment :execute :remove_belongs_to} ...)
+          (send nil? ${:execute :remove_belongs_to} ...)
         PATTERN
 
         def_node_matcher :drop_table_call, <<-PATTERN
@@ -140,7 +140,7 @@ module RuboCop
         PATTERN
 
         def_node_matcher :change_column_default_call, <<-PATTERN
-          (send nil? :change_column_default {[(sym _) (sym _)] (splat _)} $...)
+          (send nil? ${:change_column_default :change_column_comment :change_table_comment} {[(sym _) (sym _)] (splat _)} $...)
         PATTERN
 
         def_node_matcher :remove_column_call, <<-PATTERN
@@ -194,12 +194,12 @@ module RuboCop
         end
 
         def check_change_column_default_node(node)
-          change_column_default_call(node) do |args|
+          change_column_default_call(node) do |method_name, args|
             unless all_hash_key?(args.last, :from, :to)
               add_offense(
                 node,
                 message: format(
-                  MSG, action: 'change_column_default(without :from and :to)'
+                  MSG, action: "#{method_name}(without :from and :to)"
                 )
               )
             end
